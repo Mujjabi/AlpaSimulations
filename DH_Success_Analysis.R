@@ -26,6 +26,9 @@ DHL_families <- read.csv("DHL_Unique.csv", header = TRUE)
 unique(DHL_families$Family)
 unique(DHL_families$SHGD_Donor)
 
+
+# 1. Distribution of haploids
+
 library(ggplot2)
 ggplot(DHL_families, aes(Haploids)) +
   geom_histogram(position="dodge", color="black", fill="#2166AC",linetype="solid", alpha=0.9)+
@@ -55,7 +58,7 @@ ggplot(DHL_families, aes(x=Family, y=Haploids,fill=Family))+
   coord_flip()
 
 
-# 1. Visualizing the number of sucessful male fertile haploids (DH) per family
+# 2. Visualizing the number of sucessful male fertile haploids (DH) per family
 
 library(ggplot2)
 library(viridis)
@@ -69,7 +72,7 @@ ggplot(DHL_families, aes(x=Family, y=DH, fill = SHGD_Donor)) +
   xlab("Family")
 
 
-# 1. Visualizing the success rate of genome doubling per family 
+# 3. Visualizing the success rate of genome doubling per family 
 
 library(ggplot2)
 library(viridis)
