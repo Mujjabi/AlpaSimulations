@@ -34,7 +34,8 @@ ggplot(DHL_families, aes(Haploids)) +
   geom_histogram(position="dodge", color="black", fill="#2166AC",linetype="solid", alpha=0.9)+
   geom_vline(data=DHL_families, aes(xintercept=mean(Haploids)),linetype="dashed", color="red", lwd=1) + 
   scale_color_brewer(palette="Paired") + 
-  theme_classic()+theme(legend.position="top") + 
+  theme_classic()+
+  theme(legend.position="top") + 
   scale_color_brewer(palette="Dark2") +
   labs(title="Histogram of Haploid Inductions",
      x ="Number of Haploids", y = "Frequency")
@@ -65,7 +66,7 @@ library(viridis)
 library(hrbrthemes)
 ggplot(DHL_families, aes(x=Family, y=DH, fill = SHGD_Donor)) + 
   geom_bar(position="dodge", stat="identity") +
-  theme(text=element_text(size=12, angle=90)) +
+  theme(text=element_text(size=8, angle=90)) +
   scale_fill_viridis(discrete = T) +
   ggtitle("Number of MF-Plants by Family") +
   theme_ipsum() +
@@ -78,9 +79,10 @@ library(ggplot2)
 library(viridis)
 library(hrbrthemes)
 ggplot(DHL_families, aes(x=Family, y=Rate, fill = SHGD_Donor)) + 
-  geom_bar(position="dodge", stat="identity") +
+  geom_bar(stat="identity", position = "dodge") +
   scale_fill_viridis(discrete = T) +
-  ggtitle("Number of MF-Plants by Family") +
+  ggtitle("Rate of doubling per family") +
+  theme(axis.text.x = element_text(angle = 90)) +
   theme_ipsum() +
   xlab("Family")
 
