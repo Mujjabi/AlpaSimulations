@@ -1,0 +1,234 @@
+---
+title: "Simulating DNA and traits - Independent exercise"
+author: "Jana Obšteter, Alireza Ehsani, and Gregor Gorjanc"
+date: "2022-06-22"
+---
+
+# Introduction
+
+In this independent exercise, you will simulate a population and analyse its trait variation. You will expand on previous work in two ways. First, you will simulate two genetically correlated traits. Second, you will use a reproductive technique of doubled-haploids where we make an individual fully homozygous (fully inbred) quickly, without repeated rounds of selfing or mating of close relatives. This technique is used in plant breeding for at least three reasons. First, to generate a fully homozygous individual (a line) that has a fixed, and hence immortalised, genotype. Second, to exposes more genetic variation in a population. Third, by skipping rounds of selfing we can shorten a breeding cycle. Hence, it's useful to understand its impact on a breeding population. You will follow the following six steps in this exercise:
+
+- Simulate founding genomes,
+- Define traits,
+- Inspect traits,
+- Create a population and phenotype it,
+- Create a doubled-haploid population and phenotype it, and 
+- Summarise genetic and phenotype values of the two populations.
+  
+For each step, we have given you instructions and you have to write `AlphaSimR` code yourself (replace ??? with an appropriate code).
+
+This exercise deliberately goes beyond the material we have covered up to now. To help you on this pathway, we indicate which functions should be used and we point to their documentation. Embracing this growth mindset is important for mastering AlphaSimR and combining it with other R functionality.
+
+# Simulate founding genomes
+
+```{r}
+# Clean the working environment
+rm(list = ls())
+
+# Set the default plot layout
+par(mfrow = c(1, 1))
+
+# Load AlphaSimR package
+library(AlphaSimR)
+
+# Use the following parameters: 
+#   * 100 individuals 
+#   * 10 chromosomes 
+#   * 100 segregating sites (loci) per chromosomes
+#   * MAIZE species
+founderGenomes = runMacs(nInd = 100,
+                         nChr = 10,
+                         segSites = 100,
+                         species = "MAIZE")
+```
+
+```{r}
+# Create the simulation parameters object SP
+SP = SimParam$new(founderGenomes)
+```
+
+# Define traits
+
+```{r}
+# Add two traits with additive genetic effects:
+#   * Both traits are affected by 100 QTL/chromosome
+#   * Trait 1 has mean  10 and genetic variance  1
+#   * Trait 2 has mean 100 and genetic variance 10
+#   * Correlation between the additive genetic effects of the two traits is 0.5
+#     (hint: read about the corA argument in help(SimParam) - scroll to SimParam$addTraitA())
+SP$addTraitA(nQtlPerChr = 100,
+             mean = c(10, 100),
+             var = c(1, 10),
+             corA = matrix(c(1.0, 0.5,
+                             0.5, 1.0), nrow = 2))
+```
+
+# Inspect traits
+
+```{r}
+# Inspect the number of traits
+SP$nTraits
+
+# Plot histogram of additive genetic effects for each trait
+par(mfrow = c(2, 2),
+    mar = c(4, 4, 1, 1))
+hist(SP$traits[[1]]@addEff, xlab = "Additive effects - trait 1", main = "")
+hist(SP$traits[[2]]@addEff, xlab = "Additive effects - trait 2", main = "")
+
+# Plot relationship between the additive genetic effects of the two traits
+plot(x = SP$traits[[1]]@addEff, y = SP$traits[[2]]@addEff,
+     xlab = "Additive effects - trait 1", ylab = "Additive effects - trait 2")
+par(mfrow = c(1, 1))
+```
+
+What do the above plots tell you about the relationship (correlation) between the simulated effects for the two traits?
+We see the distribution of the simulated genetic values of the the 2 traits, and the correlation of the genetic effects of these traits. We see a positive correlation between the effects of the 2 traits, meaning that when the genetic effect of trait 1 increases, the effect of trait 2 also increases. 
+
+# Create a population and phenotype it
+
+```{r}
+# Create a population and save it in object maizePop
+maizePop = newPop(founderGenomes)
+
+# Extract haplotypes and genotypes from the maizePop
+maizePopHaplo = pullSegSiteHaplo(maizePop)
+maizePopGeno = pullSegSiteGeno(maizePop)
+
+# Inspect structure of the maizePopHaplo and maizePopGeno objects
+str(maizePopHaplo)
+str(maizePopGeno)
+
+# Look at haplotypes and genotypes of the first five individuals at the first
+# ten loci (sites) - use 1:n indexing to subset rows and columns
+maizePopHaplo[1:10, 1:10]
+maizePopGeno[1:5, 1:10]
+  
+# Simulate phenotypes for maizePop with the following environmental variances:
+#   * Trait 1 with varE =  2
+#   * Trait 2 with varE =  5
+maizePop = setPheno(maizePop, varE = c(2, 5))
+```
+
+# Create a doubled-haploid population and phenotype it
+
+To create doubled-haploids we use a function `makeDH()`. In short, this function takes a population of individuals, simulates the process of meiosis to generate gametes of recombined chromosomes from each individual, and doubles the newly recombined chromosomes such that the output is a set of individuals whose genome has two identical chromosome copies (these individuals are fully homozygous, that is, fully inbred). Creation of doubled-haploids is a routine operation in many plant breeding programmes.
+
+```{r}
+# Create a doubled-haploid population from the existing non doubled-haploid population
+# (hint: read about the makeDH() function using help(makeDH))
+# Save the population in object maizePopDH
+maizePopDH = makeDH(maizePop)
+
+# Look at haplotypes and genotypes of the first five individuals at the first
+# ten loci (sites)
+pullSegSiteHaplo(maizePopDH)[1:10, 1:10]
+pullSegSiteGeno(maizePopDH)[1:5, 1:10]
+# Can you see how the genomes of the doubled-haploid population differ from the
+# genomes of the standard population?
+
+# Simulate phenotypes for maizePopDH with the following environmental variances:
+#   * Trait 1 with varE =  2
+#   * Trait 2 with varE =  5
+maizePopDH = setPheno(maizePopDH, varE = c(2, 5))
+```
+
+# Summarise genetic and phenotype values
+
+```{r}
+# Plot histogram of genetic and phenotype values for trait 1 in each population
+# (that is in maizePop and maizePopDH)
+# Can you see the impact of doubled-haploids on the distribution of the values?
+# (hint: we use the same x-axis limits (via xlim) in hist() to aid the comparison)
+maizePopGv = gv(maizePop)[, 1]
+maizePopDHGv = gv(maizePopDH)[, 1]
+maizePopPheno = pheno(maizePop)[, 1]
+maizePopDHPheno = pheno(maizePopDH)[, 1]
+
+par(mfrow = c(2, 2),
+    mar = c(4, 4, 1, 1))
+rangeGv = range(c(maizePopGv, maizePopDHGv))
+breaksGv = seq(from = floor(rangeGv[1]),
+               to = ceiling(rangeGv[2]),
+               by = 0.5)
+hist(maizePopGv, xlim = rangeGv, breaks = breaksGv,
+     xlab = "Genetic value", main = "")
+hist(maizePopDHGv, xlim = rangeGv, breaks = breaksGv,
+     xlab = "Genetic value in DH", main = "")
+rangePheno = range(c(maizePopPheno, maizePopDHPheno))
+breaksPheno = seq(from = floor(rangePheno[1]),
+                  to = ceiling(rangePheno[2]),
+                  by = 0.5)
+hist(maizePopPheno, xlim = rangePheno, xlab = "Phenotype value", main = "")
+hist(maizePopDHPheno, xlim = rangePheno, xlab = "Phenotype value in DH", main = "")
+par(mfrow = c(1, 1))
+```
+
+Can you notice any difference between the distributions of values in the standard and doubled-haploid populations?
+
+```{r}
+# Calculate mean and variance of genetic values for both traits in each population
+meanG(maizePop)
+meanG(maizePopDH)
+
+varG(maizePop)
+varG(maizePopDH)
+
+# Calculate mean and variance of phenotype values for both traits in each population
+meanP(maizePop)
+meanP(maizePopDH)
+
+varP(maizePop)
+varP(maizePopDH)
+
+# Calculate heritabilities for both traits in each population
+VarG = varG(maizePop)
+VarGDH = varG(maizePopDH)
+VarP = varP(maizePop)
+VarPDH = varP(maizePopDH)
+diag(VarG) / diag(VarP)
+diag(VarGDH) / diag(VarPDH)
+
+# Calculate genetic and phenotypic correlations between traits in each population
+# Note that correlation between variables X and Y is Cov(X, Y) / sqrt(Var(X) * Var(Y))
+VarG[1, 2] / sqrt(VarG[1, 1] * VarG[2, 2])
+VarGDH[1, 2] / sqrt(VarGDH[1, 1] * VarGDH[2, 2])
+# ... or more generally we can use cov2cor() function
+cov2cor(VarG)
+cov2cor(VarGDH)
+
+cov2cor(VarP)
+cov2cor(VarPDH)
+```
+
+### Did the above quantification of the difference between the distributions of values in the standard and doubled-haploid populations convince you that the doubled-haploid process indeed exposes more genetic variation in a population?
+
+Yes! We can see that genetic and phenotype variance are indeed larger in the doubled-haploid population. Heritability is also larger, because phenotype variance is larger due to the larger genetic variance - therefore, the ratio largerVarG/(largerVarG+constantVarE)
+ is larger.
+
+```{r}
+# Plot phenotype values as a function of genetic values for both traits in each population
+par(mfrow = c(2, 2),
+    mar = c(4, 4, 1, 1))
+rangeGv1 = range(c(gv(maizePop)[, 1], gv(maizePopDH)[, 1]))
+rangeGv2 = range(c(gv(maizePop)[, 2], gv(maizePopDH)[, 2]))
+rangePheno1 = range(c(pheno(maizePop)[, 1], pheno(maizePopDH)[, 1]))
+rangePheno2 = range(c(pheno(maizePop)[, 2], pheno(maizePopDH)[, 2]))
+plot(x = gv(maizePop)[, 1], y = pheno(maizePop)[, 1],
+     xlim = rangeGv1, ylim = rangePheno1,
+     xlab = "Genetic value (trait 1)", ylab = "Phenotype value (trait 1)")
+plot(x = gv(maizePop)[, 2], y = pheno(maizePop)[, 2],
+     xlim = rangeGv2, ylim = rangePheno2,
+     xlab = "Genetic value (trait 2)", ylab = "Phenotype value (trait 2)")
+plot(x = gv(maizePopDH)[, 1], y = pheno(maizePopDH)[, 1],
+     xlim = rangeGv1, ylim = rangePheno1,
+     xlab = "Genetic value (trait 1) in DH", ylab = "Phenotype value (trait 1) in DH")
+plot(x = gv(maizePopDH)[, 2], y = pheno(maizePopDH)[, 2],
+     xlim = rangeGv2, ylim = rangePheno2,
+     xlab = "Genetic value (trait 2) in DH", ylab = "Phenotype value (trait 2) in DH")
+```
+
+### Comparing the above plots between the standard and doubled-haploid populations, can you see more variation in genetic and phenotype values in the doubled-haploid population?
+
+By comparing the extent of variation in genetic values (in x-axes) we tend to see more spread in the doubled-haploid population (bottom row) than in the standard population (top row). By comparing the extent of variation in phenotype values (in y-axes) we also see more spread in the doubled-haploid population, but this variation can be a bit less obvious to spot due to the additional randomness coming from environmental effects.
+
+In summary, we can conclude that double-haploid population manifests more variance in genetic and phenotype values in both traits. 

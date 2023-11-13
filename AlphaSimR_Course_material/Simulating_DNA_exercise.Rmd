@@ -1,0 +1,146 @@
+---
+title: "Simulating DNA - Exercise"
+author: "Jana Obšteter, Alireza Ehsani, and Gregor Gorjanc"
+date: "2022-06-22"
+---
+
+# Introduction
+
+In this exercise, you will simulate a population and analyse its genetic variation in three steps and one extra step:
+
+- Simulate founding genomes,
+- Create a population,
+- Access genomic data, and
+- EXTRA: Calculate genome statistics and summarise them.
+
+For each step, we have given you instructions with an `AlphaSimR` template code to complete (replace ??? with an appropriate code).
+
+This exercise deliberately goes beyond the material we have covered up to now. To help you on this pathway, we indicate which functions should be used and we point to their documentation. Embracing this growth mindset is important for mastering AlphaSimR and combining it with other R functionality.
+
+# Simulate founding genomes
+
+```{r}
+# Clean the working environment
+rm(list = ls())
+
+# Set the default plot layout
+par(mfrow = c(1, 1))
+
+library(AlphaSimR)
+
+# Use the following parameters:
+#   * 20 individuals
+#   * 3 chromosomes
+#   * 100 segregating loci (sites) per chromosome
+#   * MAIZE species
+# Note that maize has 10 chromosome pairs, but to speed up this session
+#   we will only simulate 3 chromosome pairs.
+# If you get errors or get lost, remember to use help(runMacs)
+founderGenomes = runMacs(nInd = ???,
+                         nChr = ???,
+                         segSites = ???,
+                         species = ???)
+```
+
+```{r}
+# Set the global simulation parameters object SP from founding genomes
+SP = SimParam$new(founderGenomes)
+```
+
+# Create a population
+
+```{r}
+# Skip sex allocation in this example because maize individuals have "male" and
+#   "female" reproductive organs).
+
+# Now create a population of individuals from founding genomes
+maizePop = newPop(???)
+```
+
+# Access genomic data
+
+```{r}
+# Access haplotypes of maize plants in the maizePop object
+maizeHaplo = pullSegSiteHaplo(???)
+
+# Check the first 10 haplotypes at the first 10 loci
+maizeHaplo[1:10, 1:10]
+
+# Check the first 5 genotypes at the first 10 loci
+maizeGeno = pullSegSiteGeno(???)
+maizeGeno[???, 1:10]
+```
+
+# EXTRA: Calculate genome statistics and summarise them
+
+To demonstrate the joint use of AlphaSimR and base R functionality, we will now analyse the simulated genomes by calculating two common statistics: allele frequency and correlation between allele dosages at different loci. We have not covered these topics previously, so, this is a guided exercise;
+
+Allele frequency describes the proportion of mutations at a locus.
+
+```{r}
+# Calculate frequency of mutant alleles in the haplotypes at each locus using the
+# colMeans() function
+alleleFreq = colMeans(maizeHaplo)
+
+# Summarise allele frequencies
+print(???)
+hist(???)
+# We usually see more loci with lower allele frequencies indicating younger
+# mutations or mutations that were selected against.
+```
+
+Correlation between allele dosages at different loci describes the extent of linkage between the loci. We expect higher absolute correlation (away from 0) between nearby loci because they are physically linked and there is a small probability of recombination between nearby loci. As the physical distance between loci increases, probability of recombination increases, which in turn reduces the correlations between allele dosages at distant loci (more on recombination in other sessions).
+
+```{r}
+# Calculate correlations between allele dosages at the haplotype loci
+lociCor = cor(???)
+
+# Inspect some correlations
+str(lociCor) # lociCor is a matrix of correlations
+lociCor[1:5, 1:5]
+
+# Summarise the correlations
+hist(lociCor)
+# Correlations are distributed around zero because most pairs of loci are far
+# apart, but there are some pairs of loci with larger correlations
+```
+
+```{r}
+# Plot correlations between the first 100 loci (these span chromosome 1)
+lociCorChr1 = lociCor[1:100, 1:100]
+image(lociCorChr1,
+      xlab = "Relative locus position", ylab = "Relative locus position")
+# Focusing on just one chromosome we can see elevated correlations (darker colour)
+# around the diagonal of the matrix - this is correlation between nearby loci
+```
+
+```{r}
+# EXTRA: Plot the correlations between loci as a function of genetic distance
+# between the loci (no need to change any of the code below - just run it!).
+lociCorChr1Val = c(lociCorChr1[lower.tri(lociCorChr1)])
+lociCorChr1Dis = outer(SP$genMap[[1]], SP$genMap[[1]], FUN = "-")
+lociCorChr1Dis = lociCorChr1Dis[lower.tri(lociCorChr1Dis)]
+plot(x = lociCorChr1Dis, y = abs(lociCorChr1Val),
+     xlab = "Distance between loci", ylab = "Correlation")
+lines(lowess(x = lociCorChr1Dis, y = abs(lociCorChr1Val)), col = "red")
+# We plot absolute value of correlations to focus only on the magnitude of values.
+# Black points show correlations between loci, while the red line shows smoothed
+# average correlation. There are too many black points though, so we can't see
+# the data clearly.
+```
+
+```{r}
+# EXTRA: A clearer way to present such data is to use smoothScatter()
+smoothScatter(x = lociCorChr1Dis, y = abs(lociCorChr1Val),
+              xlab = "Distance between loci", ylab = "Correlation")
+lines(lowess(x = lociCorChr1Dis, y = abs(lociCorChr1Val)), col = "red")
+# Blue colour represents smoothed density of our data points - the darker the
+# colour the more data points there are in one area. We use this plotting method
+# when we have many data points that overlay each other. See help(smoothScatter)
+# for more details.
+# 
+# Have you expected higher correlation between nearby loci?
+# You can repeat the simulation with a larger number of segregating loci, say
+# at least 1000 per chromosome, to capture more nearby loci. Also, you should
+# revisit this analysis with a population under selection.
+```
