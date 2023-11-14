@@ -1,0 +1,491 @@
+---
+title: 'DNA lottery: genome - Exercise'
+author: "Gregor Gorjanc and Ivan Pocrnic"
+date: "2022-06-22"
+---
+
+# Introduction
+
+In this exercise, you will simulate a base population and look at the randomness of DNA inheritance between parents and progeny (the DNA lottery) and how this process drives variation and resemblance between genomes of relatives in three steps and two extra steps:
+
+- Base population,
+- Variation in founders' genomes,
+- Variation in progeny genomes,
+- EXTRA: Visualising population structure, and
+- EXTRA: More chromosomes, sites, and progeny.
+
+For each step, we have given you instructions and you have to write `AlphaSimR` code yourself (replace ??? with an appropriate code).
+
+This exercise deliberately goes beyond the material we have covered up to now. To help you on this pathway, we indicate which functions should be used and we point to their documentation. Embracing this growth mindset is important for mastering AlphaSimR and combining it with other R functionality.
+
+# Base population
+
+Use the `runMacs()` function to simulate 6 individuals (`nInd = 6`), 2 chromosomes (`nChr = 2`), and capture 100 loci per chromosome (`segSites = 100`). Simulate a general population, so you can omit the `species` argument.
+
+```{r}
+# Clean the working environment
+rm(list = ls())
+
+# Set the default plot layout
+par(mfrow = c(1, 1))
+
+# Load AlphaSimR and simulate founder genomes
+library(AlphaSimR)
+founderGenomes = runMacs(nInd = 6,
+                         nChr = 2,
+                         segSites = 100)
+```
+
+```{r}
+# Create the `SP` object holding simulation parameters
+SP = SimParam$new(founderGenomes)
+```
+
+Use the `newPop()` function to create a base population of individuals from the founding genomes.
+
+```{r}
+# Base population
+basePop = newPop(founderGenomes)
+```
+
+# Variation in founders' genomes
+
+Now summarise variation between the genomes of the individuals by counting the number of mutations each individual carries on their chromosomes (haplotypes) and consequently also their genotypes. For this, use the `rowSums()` function.
+
+```{r}
+# Extract haplotypes and genotypes
+basePopHaplo = pullSegSiteHaplo(basePop)
+basePopGeno = pullSegSiteGeno(basePop)
+
+# Count the number of mutations per haplotype and genotype
+rowSums(basePopHaplo)
+```
+
+```{r}
+rowSums(basePopGeno)
+```
+
+How many mutations does each individual have within each of their haplotypes and, in total, in their genotype?
+Individual 1 Haplotype1:92
+Individual 1 Haplotype2:87
+Individual 1 Total:179
+
+Individual 2 Haplotype1:94
+Individual 2 Haplotype2:84
+Individual 2 Total:178
+
+Individual 3 Haplotype1:90
+Individual 3 Haplotype2:88
+Individual 3 Total:178
+
+Individual 4 Haplotype1:86
+Individual 4 Haplotype2:97
+Individual 4 Total:183
+
+Individual 5 Haplotype1:86
+Individual 5 Haplotype2:97
+Individual 5 Total:183
+
+Individual 6 Haplotype1:88
+Individual 6 Haplotype2:91
+Individual 6 Total:179
+
+
+# Variation in progeny genomes
+
+To show the extent of variation in progeny genomes from given parents, create three crosses, each with 100 progeny. The first cross will be between individuals 1 and 2, the second cross will be between individuals 1 and 4, and the third cross will be between individuals 5 and 6. Therefore you will create 2 half-sib crosses and 1 unrelated cross. To make a cross, use the function `makeCross()`.
+
+```{r}
+# First cross - between founders 1 and 2
+cross12 = makeCross(pop = basePop,
+                    crossPlan = matrix(c(1, 2), ncol = 2),
+                    nProgeny = 100)
+
+# Second cross - between founders 1 and 4
+cross14 = makeCross(pop = basePop,
+                    crossPlan = matrix(c(1, 4), ncol = 2),
+                    nProgeny = 100)
+
+# Third cross - between founders 5 and 6
+cross56 = makeCross(pop = basePop,
+                    crossPlan = matrix(c(5, 6), ncol = 2),
+                    nProgeny = 100)
+```
+
+Now summarise progeny genomes with the number of mutations per each progeny and look at how these numbers vary within crosses and across all crosses.
+
+```{r}
+# Extract progeny genotypes
+cross12Geno = pullSegSiteGeno(cross12)
+cross14Geno = pullSegSiteGeno(cross14)
+cross56Geno = pullSegSiteGeno(cross56)
+
+# Count the number of mutations in progeny genotypes
+nCross12 = rowSums(cross12Geno)
+nCross14 = rowSums(cross14Geno)
+nCross56 = rowSums(cross56Geno)
+```
+
+```{r}
+# Count the number of mutations in parent genotypes
+nPar = rowSums(basePopGeno)
+nPar1 = nPar[1]
+nPar2 = nPar[2]
+nPar4 = nPar[3]
+nPar5 = nPar[4]
+nPar6 = nPar[6]
+```
+
+```{r}
+# Evaluate the range in the number of mutations in parents and progeny
+c(nPar1, nPar2)
+range(nCross12)
+
+c(nPar1, nPar4)
+range(nCross14)
+
+c(nPar5, nPar6)
+range(nCross56)
+```
+
+Plot a histogram of the number of mutations in these crosses and add vertical lines for the number of mutations for their parents and the average across the two parents.
+
+```{r}
+# Total range to set x-axis in the histograms below
+rangeN = range(c(nPar, nCross12, nCross14, nCross56))
+
+# First cross - between founders 1 and 2
+hist(nCross12, 
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar1, col = "blue", lwd = 3)
+abline(v = nPar2, col = "red", lwd = 3)
+abline(v = (nPar1 + nPar2) / 2, col = "black", lwd = 3, lty = 2)
+
+# Second cross - between founders 1 and 4
+hist(nCross14, 
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar1, col = "blue", lwd = 3)
+abline(v = nPar4, col = "green", lwd = 3)
+abline(v = (nPar1 + nPar4) / 2, col = "black", lwd = 3, lty = 2)
+
+# Third cross - between founders 5 and 6
+hist(nCross56, 
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar5, col = "orange", lwd = 3)
+abline(v = nPar6, col = "darkgray", lwd = 3)
+abline(v = (nPar5 + nPar6) / 2, col = "black", lwd = 3, lty = 2)
+
+# All crosses together
+hist(c(nCross12, nCross14, nCross56),
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar1, col = "blue", lwd = 3)
+abline(v = nPar2, col = "red", lwd = 3)
+abline(v = nPar4, col = "green", lwd = 3)
+abline(v = nPar5, col = "orange", lwd = 3)
+abline(v = nPar6, col = "darkgray", lwd = 3)
+```
+
+What can you conclude about within and across crosses variation based on these histograms?
+
+In general, progeny inherit the number of mutations close to the parent average, but there is substantial variation around this average - this variation goes well below the parent with the smaller number and well above the parent with the larger number. Also, looking across crosses, there is even more variation, driven by this variation within each cross and variation between different parents contributing to each cross.
+
+# EXTRA: Visualising population structure
+
+Now summarise variation and resemblance between individuals by calculating and plotting correlations between their genotypes.
+
+```{r}
+# Combine genotypes of all individuals in one object
+allGeno = rbind(basePopGeno, cross12Geno, cross14Geno, cross56Geno)
+
+# Calculate correlation between allele dosages of individuals
+allGenoT = t(allGeno)
+indCor = cor(allGenoT)
+
+# Colour pallete for correlations
+corCols = hcl.colors(n = 21, palette = "RdYlBu",rev = TRUE)
+
+# Plot the correlation matrix of allele dosages between individuals
+image(indCor, xlab = "Individual", ylab = "Individual", axes = FALSE,
+      col = corCols)
+# ... designate parents and crosses 
+pos = (c(6, 106, 206) - 0.5) / 306
+abline(h = pos, v = pos)
+pos = c(3, (106 - (106 - 7) / 2), (206 - (206 - 107) / 2), (306 - (303 - 207) / 2)) / 306
+axis(side = 1, at = pos, labels = c("Parents", "Cross 1-2", "Cross 1-4", "Cross 5-6"))
+axis(side = 2, at = pos, labels = c("Parents", "Cross 1-2", "Cross 1-4", "Cross 5-6"))
+```
+
+###  What can you say about within and across crosses variation based on the image of correlation matrix?
+
+ We can clearly see high relatedness within each cross (high (red) values in blocks along the diagonal), as well as between the parents and their crosses (high (red) values in the left or bottom margin between a parent its corresponding crosses). We can also see higher relatedness between individuals in crosses 1-2 and crosses 1-4. This is so, because these crosses have one parent in common (individuals are half-sibs). On the other hand, there is lower relatedness between individuals from these two crosses and individuals from the cross 5-6. This is so, because these crosses don’t share a parent. However, there is some “background” relatedness, because all the parents come from the same population. 
+
+Now we will go one step beyond the previously presented material and visualise population structure by projecting the genotype data into two dimensions. We will use a linear technique based on Principal Component Analysis (PCA). We have not covered this before, so this will be a guided exercise)
+
+```{r}
+# Recall how many genotypes and loci we are working with
+dim(allGeno)
+
+# Prepare colours and symbols
+parCol = c("blue", "red", "black", "green", "orange", "darkgray")
+crossCol = c("purple", "cyan", "brown3")
+indCol = c(parCol, # parents
+           rep(crossCol, each = 100)) # progeny
+parSym = as.character(1:6)
+crossSym = rep("+", each = 300)
+indSym = c(parSym, # parents
+           crossSym) # progeny
+
+# PCA (its available in base R via the prcomp() function)
+resPca = prcomp(x = allGeno)
+ranges = range(resPca$x[, 1:2])
+plot(x = resPca$x[, 1], y = resPca$x[, 2],
+     xlab = "PCA dimension 1", ylab = "PCA dimension 2", 
+     col = indCol, pch = indSym,
+     xlim = ranges, ylim = ranges)
+legend("bottomright", legend = c("Cross 1-2", "Cross 1-4", "Cross 5-6"),
+       col = crossCol, pch = "+", bty = "n")
+# replot parents so they are clearly visible
+points(x = resPca$x[1:6, 1], y = resPca$x[1:6, 2], col = "white", pch = 19, cex = 2)
+points(x = resPca$x[1:6, 1], y = resPca$x[1:6, 2], col = parCol, pch = parSym, cex = 2)
+```
+
+What can you say about within and across crosses variation based on the PCA plot?
+
+
+
+
+```{r}
+# Clean the working environment
+rm(list = ls())
+
+# Set the default plot layout
+par(mfrow = c(1, 1))
+
+# Load AlphaSimR and simulate founder genomes
+library(AlphaSimR)
+founderGenomes = runMacs(nInd = 6,
+                         nChr = 2,
+                         segSites = 100)
+```
+
+```{r}
+# Create the `SP` object holding simulation parameters
+SP = SimParam$new(founderGenomes)
+```
+We see that individuals thta share the same parent (full sibs) are categorized together in the same cluster showing higher relatedness compared to individuals from different crosses. Half-sib individuals are also more related (1-2) and (1-4) to each other than individuals that dont sgare parents. 
+
+# EXTRA: More chromosomes, sites, and progeny
+
+Extend the above exercise by increasing the number of chromosomes (say, use 10), increasing the number of sites per chromosomes (say, use 1000), and number of progeny per cross (say, use 200).
+
+
+```{r}
+#simulate new founder genomes
+
+library(AlphaSimR)
+founderGenomes2 = runMacs(nInd = 6,
+                         nChr = 10,
+                         segSites = 1000)
+```
+
+```{r}
+# Create the `SP` object holding simulation parameters
+SP = SimParam$new(founderGenomes2)
+```
+
+```{r}
+# Base population
+basePop2 = newPop(founderGenomes2)
+```
+
+# Variation in founders' genomes
+
+Now summarise variation between the genomes of the individuals by counting the number of mutations each individual carries on their chromosomes (haplotypes) and consequently also their genotypes. For this, use the `rowSums()` function.
+
+```{r}
+# Extract haplotypes and genotypes
+basePopHaplo = pullSegSiteHaplo(basePop2)
+basePopGeno = pullSegSiteGeno(basePop2)
+
+# Count the number of mutations per haplotype and genotype
+rowSums(basePopHaplo)
+```
+
+
+# Variation in progeny genomes
+
+To show the extent of variation in progeny genomes from given parents, create three crosses, each with 100 progeny. The first cross will be between individuals 1 and 2, the second cross will be between individuals 1 and 4, and the third cross will be between individuals 5 and 6. Therefore you will create 2 half-sib crosses and 1 unrelated cross. To make a cross, use the function `makeCross()`.
+
+```{r}
+# First cross - between founders 1 and 2
+cross12 = makeCross(pop = basePop2,
+                    crossPlan = matrix(c(1, 2), ncol = 2),
+                    nProgeny = 200)
+
+# Second cross - between founders 1 and 4
+cross14 = makeCross(pop = basePop2,
+                    crossPlan = matrix(c(1, 4), ncol = 2),
+                    nProgeny = 200)
+
+# Third cross - between founders 5 and 6
+cross56 = makeCross(pop = basePop2,
+                    crossPlan = matrix(c(5, 6), ncol = 2),
+                    nProgeny = 200)
+```
+
+Now summarise progeny genomes with the number of mutations per each progeny and look at how these numbers vary within crosses and across all crosses.
+
+```{r}
+# Extract progeny genotypes
+cross12Geno = pullSegSiteGeno(cross12)
+cross14Geno = pullSegSiteGeno(cross14)
+cross56Geno = pullSegSiteGeno(cross56)
+
+# Count the number of mutations in progeny genotypes
+nCross12 = rowSums(cross12Geno)
+nCross14 = rowSums(cross14Geno)
+nCross56 = rowSums(cross56Geno)
+```
+
+```{r}
+# Count the number of mutations in parent genotypes
+nPar = rowSums(basePopGeno)
+nPar1 = nPar[1]
+nPar2 = nPar[2]
+nPar4 = nPar[3]
+nPar5 = nPar[4]
+nPar6 = nPar[6]
+```
+
+```{r}
+# Evaluate the range in the number of mutations in parents and progeny
+c(nPar1, nPar2)
+range(nCross12)
+
+c(nPar1, nPar4)
+range(nCross14)
+
+c(nPar5, nPar6)
+range(nCross56)
+```
+
+Plot a histogram of the number of mutations in these crosses and add vertical lines for the number of mutations for their parents and the average across the two parents.
+
+```{r}
+# Total range to set x-axis in the histograms below
+rangeN = range(c(nPar, nCross12, nCross14, nCross56))
+
+# First cross - between founders 1 and 2
+hist(nCross12, 
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar1, col = "blue", lwd = 3)
+abline(v = nPar2, col = "red", lwd = 3)
+abline(v = (nPar1 + nPar2) / 2, col = "black", lwd = 3, lty = 2)
+
+# Second cross - between founders 1 and 4
+hist(nCross14, 
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar1, col = "blue", lwd = 3)
+abline(v = nPar4, col = "green", lwd = 3)
+abline(v = (nPar1 + nPar4) / 2, col = "black", lwd = 3, lty = 2)
+
+# Third cross - between founders 5 and 6
+hist(nCross56, 
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar5, col = "orange", lwd = 3)
+abline(v = nPar6, col = "darkgray", lwd = 3)
+abline(v = (nPar5 + nPar6) / 2, col = "black", lwd = 3, lty = 2)
+
+# All crosses together
+hist(c(nCross12, nCross14, nCross56),
+     xlim = rangeN, breaks = seq(from = rangeN[1], to = rangeN[2]),
+     xlab = "Number of mutations")
+# Add vertical lines for the number of mutations for their parents
+abline(v = nPar1, col = "blue", lwd = 3)
+abline(v = nPar2, col = "red", lwd = 3)
+abline(v = nPar4, col = "green", lwd = 3)
+abline(v = nPar5, col = "orange", lwd = 3)
+abline(v = nPar6, col = "darkgray", lwd = 3)
+```
+
+In general, progeny inherit the number of mutations close to the parent average, but there is substantial variation around this average - this variation goes well below the parent with the smaller number and well above the parent with the larger number. Also, looking across crosses, there is even more variation, driven by this variation within each cross and variation between different parents contributing to each cross.
+
+
+
+
+# Visualising population structure
+
+Now summarise variation and resemblance between individuals by calculating and plotting correlations between their genotypes.
+
+```{r}
+# Combine genotypes of all individuals in one object
+allGeno = rbind(basePopGeno, cross12Geno, cross14Geno, cross56Geno)
+
+# Calculate correlation between allele dosages of individuals
+allGenoT = t(allGeno)
+indCor = cor(allGenoT)
+
+# Colour pallete for correlations
+corCols = hcl.colors(n = 21, palette = "RdYlBu",rev = TRUE)
+
+# Plot the correlation matrix of allele dosages between individuals
+image(indCor, xlab = "Individual", ylab = "Individual", axes = FALSE,
+      col = corCols)
+# ... designate parents and crosses 
+pos = (c(6, 106, 206) - 0.5) / 306
+abline(h = pos, v = pos)
+pos = c(3, (106 - (106 - 7) / 2), (206 - (206 - 107) / 2), (306 - (303 - 207) / 2)) / 306
+axis(side = 1, at = pos, labels = c("Parents", "Cross 1-2", "Cross 1-4", "Cross 5-6"))
+axis(side = 2, at = pos, labels = c("Parents", "Cross 1-2", "Cross 1-4", "Cross 5-6"))
+```
+
+Now we will go one step beyond the previously presented material and visualise population structure by projecting the genotype data into two dimensions. We will use a linear technique based on Principal Component Analysis (PCA). We have not covered this before, so this will be a guided exercise)
+
+```{r}
+# Recall how many genotypes and loci we are working with
+dim(allGeno)
+
+# Prepare colours and symbols
+parCol = c("blue", "red", "black", "green", "orange", "darkgray")
+crossCol = c("purple", "cyan", "brown3")
+indCol = c(parCol, # parents
+           rep(crossCol, each = 100)) # progeny
+parSym = as.character(1:6)
+crossSym = rep("+", each = 300)
+indSym = c(parSym, # parents
+           crossSym) # progeny
+
+# PCA (its available in base R via the prcomp() function)
+resPca = prcomp(x = allGeno)
+ranges = range(resPca$x[, 1:2])
+plot(x = resPca$x[, 1], y = resPca$x[, 2],
+     xlab = "PCA dimension 1", ylab = "PCA dimension 2", 
+     col = indCol, pch = indSym,
+     xlim = ranges, ylim = ranges)
+legend("bottomright", legend = c("Cross 1-2", "Cross 1-4", "Cross 5-6"),
+       col = crossCol, pch = "+", bty = "n")
+# replot parents so they are clearly visible
+points(x = resPca$x[1:6, 1], y = resPca$x[1:6, 2], col = "white", pch = 19, cex = 2)
+points(x = resPca$x[1:6, 1], y = resPca$x[1:6, 2], col = parCol, pch = parSym, cex = 2)
+```
+
+We still see similar clustering of individuals based on the crosses. However, there is some overlap in the classification of individuals. Some individuals from the cross 1-2 are more related to individuals in the cross 1-5. I would assume that there were mutations that changed these individual Genome to resemble more of parental lines 5 and 6, than there corresponding parents. However, i dont think mutations occur at these high frequencies, like we saw in the previous session. But this is my best guess, or I might have done some error in the simulation. 
+
+
+
+
+
