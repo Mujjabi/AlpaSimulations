@@ -43,9 +43,11 @@ In AlphaSimR, we will represent DNA as a series of zeros and ones in one row tab
 
 In AlphasimR we use Fisher's Quantitative Genetics framework 1918 to relate DNA variation (SNPs) to phenotypic variation. 
 
-    **Phenotype value =  sum of the genetic value + environmental effect + GxE**
+    Phenotype value =  sum of the genetic value + envi. effect + GxE ( P = G + E + GxE)
 
-    **Genetic value (G) = the sum of the genetic values from the different DNA positions in the genome**
+    Genetic value (G) = the sum of the genetic values from the different DNA positions
+
+![Alt text](<WhatsApp Image 2023-11-11 at 13.23.01_f3569800.jpg>)
 
 ## Computational Techniques
 
@@ -57,4 +59,6 @@ We will use random number generators to:
 - To select which DNA sites affect the trait,
 - To simulate genetic effects at these DNA sites, 
 - To simulate environmental effects,possibly in interaction with the genotype.
+
+
 
