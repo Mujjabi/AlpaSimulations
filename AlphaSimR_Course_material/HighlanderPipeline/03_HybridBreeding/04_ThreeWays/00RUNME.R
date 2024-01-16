@@ -7,7 +7,7 @@
 
 # ---- Clean environment and load packages ----
 rm(list = ls())
-install.packages(pkgs = "AlphaSimR")
+# install.packages(pkgs = "AlphaSimR")
 library(package = "AlphaSimR")
 
 # ---- Load global parameters ----

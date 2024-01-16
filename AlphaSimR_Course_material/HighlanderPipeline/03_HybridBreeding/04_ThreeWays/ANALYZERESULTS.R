@@ -5,7 +5,7 @@ library(package = "dplyr")
 df <- bind_rows(readRDS("HybridPheno.rds"))
 
 # Plot results
-png("Results.png", height = 800, width = 600)  #Rename the .png to see how results are generated
+png("Results.png", height = 800, width = 600)
 par(mfrow=c(3,2))
 
 # Inbred Genetic Gain
